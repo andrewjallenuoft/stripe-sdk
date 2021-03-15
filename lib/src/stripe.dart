@@ -27,7 +27,7 @@ class Stripe {
       : api = StripeApi(publishableKey, stripeAccount: stripeAccount),
         _returnUrlForSca = returnUrlForSca ?? 'stripesdk://3ds.stripesdk.io' {
     // TODO: Throw real exception in 5.0
-    assert(_isValidScheme());
+    //assert(_isValidScheme());
   }
 
   bool _isValidScheme() {
