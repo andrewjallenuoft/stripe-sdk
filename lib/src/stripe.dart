@@ -76,8 +76,8 @@ class Stripe {
   /// This should be set on the intent before attempting to authenticate it.
   String getReturnUrlForSca({String webReturnPath}) {
     if (kIsWeb) {
-      assert(webReturnPath?.isNotEmpty ?? false);
-      var webUrl = Uri.base.toString() + webReturnPath;
+      var webUrl = (Uri.base.hasScheme ? Uri.base.scheme + '://' : "") + Uri.base.host + (Uri.base.hasPort ? ":" + Uri.base.port.toString() : "") +
+          (webReturnPath ?? "");
       debugPrint(webUrl);
       return webUrl;
     } else {
@@ -115,7 +115,7 @@ class Stripe {
   /// Returns the PaymentIntent.
   /// https://stripe.com/docs/payments/payment-intents/android
   Future<Map<String, dynamic>> confirmPayment(String paymentIntentClientSecret, {String paymentMethodId}) async {
-    final data = {'return_url': getReturnUrlForSca()};
+    final data = {'return_url': getReturnUrlForSca(webReturnPath: _returnUrlForSca)};
     if (paymentMethodId != null) data['payment_method'] = paymentMethodId;
     final paymentIntent = await api.confirmPaymentIntent(paymentIntentClientSecret, data: data);
     if (paymentIntent['status'] == 'requires_action') {
@@ -144,7 +144,8 @@ class Stripe {
   Future<Map<String, dynamic>> authenticatePaymentWithNextAction(Map nextAction) async {
     return _authenticateIntent(
         nextAction,
-        (uri) => api.retrievePaymentIntent(
+            (uri) =>
+            api.retrievePaymentIntent(
               uri.queryParameters['payment_intent_client_secret'],
             ));
   }
@@ -154,7 +155,8 @@ class Stripe {
   Future<Map<String, dynamic>> _handleSetupIntent(Map action) async {
     return _authenticateIntent(
         action,
-        (uri) => api.retrieveSetupIntent(
+            (uri) =>
+            api.retrieveSetupIntent(
               uri.queryParameters['setup_intent_client_secret'],
             ));
   }
