@@ -114,8 +114,8 @@ class Stripe {
   /// Confirm and authenticate a payment.
   /// Returns the PaymentIntent.
   /// https://stripe.com/docs/payments/payment-intents/android
-  Future<Map<String, dynamic>> confirmPayment(String paymentIntentClientSecret, {String paymentMethodId}) async {
-    final data = {'return_url': getReturnUrlForSca(webReturnPath: _returnUrlForSca)};
+  Future<Map<String, dynamic>> confirmPayment(String paymentIntentClientSecret, {String paymentMethodId, String webReturnPath}) async {
+    final data = {'return_url': getReturnUrlForSca(webReturnPath: webReturnPath ?? _returnUrlForSca)};
     if (paymentMethodId != null) data['payment_method'] = paymentMethodId;
     final paymentIntent = await api.confirmPaymentIntent(paymentIntentClientSecret, data: data);
     if (paymentIntent['status'] == 'requires_action') {
