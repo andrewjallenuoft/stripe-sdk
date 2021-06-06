@@ -18,7 +18,7 @@ class CustomerSession extends ChangeNotifier {
   bool isDisposed = false;
 
   /// Create a new CustomerSession instance. Use this if you prefer to manage your own instances.
-  CustomerSession._(EphemeralKeyProvider provider, {this.apiVersion = DEFAULT_API_VERSION, String stripeAccount})
+  CustomerSession(EphemeralKeyProvider provider, {this.apiVersion = DEFAULT_API_VERSION, String stripeAccount})
       : _keyManager = EphemeralKeyManager(provider, keyRefreshBufferInSeconds),
         _apiHandler = StripeApiHandler(stripeAccount: stripeAccount) {
     _apiHandler.apiVersion = apiVersion;
@@ -29,7 +29,7 @@ class CustomerSession extends ChangeNotifier {
   /// If [prefetchKey] is true, fetch the ephemeral key immediately.
   static void initCustomerSession(EphemeralKeyProvider provider,
       {String apiVersion = DEFAULT_API_VERSION, String stripeAccount, prefetchKey = true}) {
-    _instance = CustomerSession._(provider, apiVersion: apiVersion, stripeAccount: stripeAccount);
+    _instance = CustomerSession(provider, apiVersion: apiVersion, stripeAccount: stripeAccount);
     if (prefetchKey) {
       _instance._keyManager.retrieveEphemeralKey();
     }
