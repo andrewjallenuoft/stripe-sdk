@@ -26,11 +26,12 @@ class Stripe {
   /// It is required to use your own app specific url scheme and host. This
   /// parameter must match your "android/app/src/main/AndroidManifest.xml"
   /// and "ios/Runner/Info.plist" configuration.
-  Stripe(String publishableKey, {String? stripeAccount, @required String returnUrlForSca})
+  Stripe(String publishableKey, {String? stripeAccount, @required String? returnUrlForSca})
       : api = StripeApi(publishableKey, stripeAccount: stripeAccount),
         _returnUrlForSca = returnUrlForSca ?? 'stripesdk://3ds.stripesdk.io';
 
   final StripeApi api;
+  final String _returnUrlForSca;
   static Stripe? _instance;
 
   /// Access the instance of Stripe by calling [Stripe.instance].
@@ -56,16 +57,18 @@ class Stripe {
   /// It is required to use your own app specific url scheme and host. This
   /// parameter must match your "android/app/src/main/AndroidManifest.xml"
   /// and "ios/Runner/Info.plist" configuration.
-  static void init(String publishableKey, {String stripeAccount, @required String returnUrlForSca}) {
+  static void init(String publishableKey, {String? stripeAccount, @required String? returnUrlForSca}) {
     _instance = Stripe(publishableKey, stripeAccount: stripeAccount, returnUrlForSca: returnUrlForSca);
     StripeApi.init(publishableKey, stripeAccount: stripeAccount);
   }
 
   /// Creates a return URL that can be used to authenticate a single PaymentIntent.
   /// This should be set on the intent before attempting to authenticate it.
-  String getReturnUrlForSca({String? webReturnUrl}) {
+  String getReturnUrlForSca({String? webReturnPath}) {
     if (kIsWeb) {
-      final String webUrl = (Uri.base.hasScheme ? Uri.base.scheme + '://' : "") + Uri.base.host + (Uri.base.hasPort ? ":" + Uri.base.port.toString() : "") +
+      final String webUrl = (Uri.base.hasScheme ? Uri.base.scheme + '://' : "") +
+          Uri.base.host +
+          (Uri.base.hasPort ? ":" + Uri.base.port.toString() : "") +
           (webReturnPath ?? "");
       return webUrl;
     } else {
@@ -80,7 +83,7 @@ class Stripe {
       {String? webReturnPath, required BuildContext context}) async {
     final Map<String, dynamic> intent = await api.confirmSetupIntent(
       clientSecret,
-      data: {'return_url': getReturnUrlForSca(webReturnUrl: webReturnPath)},
+      data: {'return_url': getReturnUrlForSca(webReturnPath: webReturnPath)},
     );
     return _handleSetupIntent(intent, context);
   }
@@ -89,7 +92,7 @@ class Stripe {
   /// https://stripe.com/docs/api/setup_intents/confirm
   Future<Map<String, dynamic>> confirmSetupIntent(String clientSecret, String paymentMethod,
       {String? webReturnPath, required BuildContext context}) async {
-    var returnUrlForSca = getReturnUrlForSca(webReturnUrl: webReturnPath);
+    var returnUrlForSca = getReturnUrlForSca(webReturnPath: webReturnPath);
     final Map<String, dynamic> intent = await api.confirmSetupIntent(
       clientSecret,
       data: {
