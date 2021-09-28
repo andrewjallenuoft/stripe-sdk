@@ -13,24 +13,24 @@ class PaymentScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Payments'),
+        title: const Text('Payments'),
       ),
       body: ListView(children: <Widget>[
         Card(
           child: ListTile(
-            title: Text('Automatic confirmation (3DS2)'),
+            title: const Text('Automatic confirmation (3DS2)'),
             onTap: () => createAutomaticPaymentIntent(context),
           ),
         ),
         Card(
           child: ListTile(
-            title: Text('Manual confirmation (3DS2)'),
+            title: const Text('Manual confirmation (3DS2)'),
             onTap: () => createAutomaticPaymentIntent(context),
           ),
         ),
         Card(
           child: ListTile(
-            title: Text('Checkout (WIP)'),
+            title: const Text('Checkout (WIP)'),
             onTap: () => checkout(context),
           ),
         ),
@@ -39,24 +39,10 @@ class PaymentScreen extends StatelessWidget {
   }
 
   Future checkout(BuildContext context) {
-    var items = [
-      CheckoutItem(
-        name: 'Book',
-        price: 40000,
-        currency: '\$',
-      ),
-      CheckoutItem(
-        name: 'CD',
-        price: 10000,
-        currency: '\$',
-      )
-    ];
-    final networkService = locator.get();
+    final networkService = locator.get<NetworkService>();
     return Navigator.push(context, MaterialPageRoute(builder: (context) {
       // ignore: deprecated_member_use
-      return CheckoutScreen(
-        title: 'Checkout',
-        items: items,
+      return CheckoutPage(
 //        paymentMethods: paymentMethods.paymentMethods.map((e) => PaymentMethod(e.id, e.last4)),
         createPaymentIntent: networkService.createAutomaticPaymentIntent,
       );
@@ -65,14 +51,17 @@ class PaymentScreen extends StatelessWidget {
 
   void createAutomaticPaymentIntent(BuildContext context) async {
     final networkService = locator.get<NetworkService>();
-    final response = await networkService.createAutomaticPaymentIntent(10000);
+    final response = await networkService.createAutomaticPaymentIntent();
     if (response.status == 'succeeded') {
       // TODO: success
       debugPrint('Success before authentication.');
       return;
     }
-    final result =
-        await Stripe.instance.confirmPayment(response.clientSecret, paymentMethodId: 'pm_card_threeDSecure2Required');
+    final result = await Stripe.instance.confirmPayment(
+      response.clientSecret,
+      context,
+      paymentMethodId: 'pm_card_threeDSecure2Required',
+    );
     if (result['status'] == 'succeeded') {
       // TODO: success
       debugPrint('Success after authentication.');
@@ -84,14 +73,17 @@ class PaymentScreen extends StatelessWidget {
 
   void createManualPaymentIntent(BuildContext context) async {
     final networkService = locator.get<NetworkService>();
-    final response = await networkService.createManualPaymentIntent(
-        10000, 'pm_card_threeDSecure2Required', Stripe.instance.getReturnUrlForSca(webReturnPath: '/'));
+    final Map response = await (networkService.createManualPaymentIntent(
+      10000,
+      'pm_card_threeDSecure2Required',
+      Stripe.instance.getReturnUrlForSca(webReturnUrl: '/'),
+    ) as FutureOr<Map<dynamic, dynamic>>);
     if (response['status'] == 'succeeded') {
       // TODO: success
       debugPrint('Success before authentication.');
       return;
     }
-    final result = await Stripe.instance.authenticatePayment(response['clientSecret']);
+    final result = await Stripe.instance.authenticatePayment(response['clientSecret'], context);
     if (result['status'] == 'requires_confirmation') {
       // TODO: make call to server to confirm
       debugPrint('Success after authentication.');
@@ -100,4 +92,6 @@ class PaymentScreen extends StatelessWidget {
       debugPrint('Error');
     }
   }
+
+  const PaymentScreen({Key? key}) : super(key: key);
 }

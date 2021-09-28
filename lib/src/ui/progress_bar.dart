@@ -4,9 +4,9 @@ void hideProgressDialog(BuildContext context) {
   Navigator.pop(context);
 }
 
-void showProgressDialog(BuildContext context) {
-  showDialog(
+Future<bool?> showProgressDialog(BuildContext context) {
+  return showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => Center(child: CircularProgressIndicator()));
+      builder: (context) => const Center(child: CircularProgressIndicator()));
 }

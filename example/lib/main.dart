@@ -22,108 +22,112 @@ String getScaReturnUrl() {
 
 void main() async {
   initializeLocator();
-  Stripe.init(_stripePublishableKey, returnUrlForSca: getScaReturnUrl());
+  Stripe.init(_stripePublishableKey);
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
-  runApp(MyApp());
+  runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     CustomerSession.initCustomerSession((version) => locator.get<NetworkService>().getEphemeralKey(version));
     final app = MaterialApp(
-        title: 'Stripe SDK Demo',
-        // home: HomeScreen(),
-
-        onUnknownRoute: (settings) {
-          final uri = Uri.parse(settings.name);
-          if (uri.queryParameters.containsKey('setup_intent') || uri.queryParameters.containsKey('payment_intent')) {
-            return MaterialPageRoute(builder: (context) => IntentCompleteScreen());
-          }
-          return MaterialPageRoute(builder: (context) => HomeScreen());
-        },
-        routes: {
-          '/': (context) => HomeScreen(),
-          '/3ds/complete': (context) => IntentCompleteScreen(),
-          '/payments': (context) => PaymentScreen()
-        },
-        initialRoute: '/',
-        theme: ThemeData(visualDensity: VisualDensity.adaptivePlatformDensity));
+      title: 'Stripe SDK Demo',
+      onUnknownRoute: (RouteSettings settings) {
+        final Uri? uri = Uri.tryParse(settings.name!);
+        if (uri == null &&
+            !uri!.queryParameters.containsKey('setup_intent') &&
+            !uri.queryParameters.containsKey('payment_intent')) {
+          return MaterialPageRoute(builder: (context) => const HomeScreen());
+        }
+        return MaterialPageRoute(builder: (context) => const IntentCompleteScreen());
+      },
+      routes: {
+        '/': (context) => const HomeScreen(),
+        '/3ds/complete': (context) => const IntentCompleteScreen(),
+        '/payments': (context) => const PaymentScreen()
+      },
+      initialRoute: '/',
+      theme: ThemeData(visualDensity: VisualDensity.adaptivePlatformDensity),
+    );
     return ChangeNotifierProvider(create: (_) => PaymentMethodStore(), child: app);
   }
 }
 
 class HomeScreen extends StatelessWidget {
+  const HomeScreen({Key? key}) : super(key: key);
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Stripe SDK Demo'),
+        title: const Text('Stripe SDK Demo'),
       ),
       body: ListView(children: <Widget>[
         Card(
           child: ListTile(
-            title: Text('Customer Details'),
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => EditCustomerScreen())),
+            title: const Text('Customer Details'),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const EditCustomerScreen())),
           ),
         ),
         Card(
           child: ListTile(
-            title: Text('Payment Methods Screen'),
+            title: const Text('Payment Methods Screen'),
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) {
               final paymentMethods = Provider.of<PaymentMethodStore>(context, listen: false);
               // ignore: deprecated_member_use
-              return PaymentMethodsScreen(
-                  createSetupIntent: locator.get<NetworkService>().createSetupIntent,
-                  paymentMethodStore: paymentMethods);
+              return PaymentMethodsScreen(paymentMethodStore: paymentMethods);
             })),
           ),
         ),
-        Card(
+        const Card(
           child: ListTile(
             title: Text('Add Payment Method with Setup Intent'),
-            onTap: () async => await createPaymentMethodWithSetupIntent(context),
+            // onTap: () => createPaymentMethodWithSetupIntent(context),
           ),
         ),
-        Card(
+        const Card(
           child: ListTile(
             title: Text('Add Payment Method without Setup Intent'),
-            onTap: () async => await createPaymentMethodWithoutSetupIntent(context),
+            // onTap: () => createPaymentMethodWithoutSetupIntent(context),
           ),
         ),
         Card(
           child: ListTile(
-            title: Text('Add Stripe Test Card'),
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => SetupIntentWithScaScreen())),
+            title: const Text('Add Stripe Test Card'),
+            onTap: () =>
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const SetupIntentWithScaScreen())),
           ),
         ),
         Card(
           child: ListTile(
-            title: Text('Payments'),
-            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentScreen())),
+            title: const Text('Payments'),
+            onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const PaymentScreen())),
           ),
         ),
       ]),
     );
   }
 
-  void createPaymentMethodWithSetupIntent(BuildContext context) async {
-    final networkService = locator.get<NetworkService>();
-    await Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) =>
-                // ignore: deprecated_member_use
-                AddPaymentMethodScreen.withSetupIntent(networkService.createSetupIntent)));
-  }
+// void createPaymentMethodWithSetupIntent(BuildContext context) async {
+//   final networkService = locator.get<NetworkService>();
+//   await Navigator.push(
+//       context,
+//       MaterialPageRoute(
+//           builder: (context) =>
+//               // ignore: deprecated_member_use
+//               AddPaymentMethodScreen.withSetupIntent(networkService.createSetupIntent)));
+// }
 
-  void createPaymentMethodWithoutSetupIntent(BuildContext context) async {
-    await Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) =>
-                // ignore: deprecated_member_use
-                AddPaymentMethodScreen.withoutSetupIntent()));
-  }
+// void createPaymentMethodWithoutSetupIntent(BuildContext context) async {
+//   await Navigator.push(
+//       context,
+//       MaterialPageRoute(
+//           builder: (context) =>
+//               // ignore: deprecated_member_use
+//               AddPaymentMethodScreen.withoutSetupIntent()));
+// }
 }
