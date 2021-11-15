@@ -36,8 +36,8 @@ class StripeApiHandler {
   StripeApiHandler({this.stripeAccount});
 
   Future<Map<String, dynamic>> request(RequestMethod method, String path, String key, String? apiVersion,
-      {final Map<String, dynamic>? params}) {
-    final options = RequestOptions(key: key, apiVersion: apiVersion, stripeAccount: stripeAccount);
+      {final Map<String, dynamic>? params, final String? stripeAccountOverride}) {
+    final options = RequestOptions(key: key, apiVersion: apiVersion, stripeAccount: stripeAccountOverride ?? stripeAccount);
     return _getStripeResponse(method, liveApiPath + path, options, params: params);
   }
 

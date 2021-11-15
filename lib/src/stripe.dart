@@ -107,14 +107,15 @@ class Stripe {
   /// Returns the PaymentIntent.
   /// https://stripe.com/docs/payments/payment-intents/android
   Future<Map<String, dynamic>> confirmPayment(String paymentIntentClientSecret, BuildContext context,
-      {String? paymentMethodId, String? webReturnPath}) async {
+      {String? paymentMethodId, String? webReturnPath, String? stripeAccountOverride}) async {
     final data = {'return_url': getReturnUrlForSca(webReturnPath: webReturnPath ?? _returnUrlForSca)};
     if (paymentMethodId != null) data['payment_method'] = paymentMethodId;
     final Map<String, dynamic> paymentIntent = await api.confirmPaymentIntent(
       paymentIntentClientSecret,
       data: data,
+      stripeAccountOverride: stripeAccountOverride,
     );
-    return _handlePaymentIntent(paymentIntent, context);
+    return _handlePaymentIntent(paymentIntent, context, stripeAccountOverride: stripeAccountOverride);
   }
 
   /// Authenticate a payment.
@@ -129,8 +130,8 @@ class Stripe {
   /// This is similar to [authenticatePayment] but is slightly more efficient,
   /// as it avoids the request to the Stripe API to retrieve the action.
   /// To use this, return the complete [paymentIntent] from your server.
-  Future<Map<String, dynamic>> _handlePaymentIntent(Map<String, dynamic> paymentIntent, BuildContext context) async {
-    return _authenticateIntent(paymentIntent, context, api.retrievePaymentIntent);
+  Future<Map<String, dynamic>> _handlePaymentIntent(Map<String, dynamic> paymentIntent, BuildContext context, {final String? stripeAccountOverride}) async {
+    return _authenticateIntent(paymentIntent, context, api.retrievePaymentIntent, stripeAccountOverride: stripeAccountOverride);
   }
 
   /// Launch 3DS in a new browser window.
@@ -140,7 +141,7 @@ class Stripe {
   }
 
   Future<Map<String, dynamic>> _authenticateIntent(Map<String, dynamic> intent, BuildContext context,
-      Future<Map<String, dynamic>> Function(String clientSecret) getIntentFunction) async {
+      Future<Map<String, dynamic>> Function(String clientSecret, {String? apiVersion, String? stripeAccountOverride}) getIntentFunction, {final String? stripeAccountOverride}) async {
     if (intent['status'] != 'requires_action') return intent;
     final clientSecret = intent['client_secret'];
     final action = intent['next_action'];
@@ -148,20 +149,20 @@ class Stripe {
     final returnUri = Uri.parse(action['redirect_to_url']['return_url']);
 
     if (kIsWeb) {
-      return _authenticateWithBrowser(context, url, returnUri, getIntentFunction, clientSecret);
+      return _authenticateWithBrowser(context, url, returnUri, getIntentFunction, clientSecret,  stripeAccountOverride: stripeAccountOverride);
     } else {
       await _authenticateWithWebView(context, url, returnUri);
-      return getIntentFunction(clientSecret);
+      return getIntentFunction(clientSecret, stripeAccountOverride: stripeAccountOverride);
     }
   }
 
   Future<Map<String, dynamic>> _authenticateWithBrowser(BuildContext context, String url, Uri returnUri,
-      Future<Map<String, dynamic>> Function(String clientSecret) getIntentFunction, String clientSecret) async {
+      Future<Map<String, dynamic>> Function(String clientSecret, {String? apiVersion, String? stripeAccountOverride}) getIntentFunction, String clientSecret, {final String? stripeAccountOverride}) async {
     final completer = Completer<Map<String, dynamic>>();
 
     late StreamSubscription<html.Event> subscription;
     subscription = html.window.onFocus.listen((event) async {
-      final intent = await getIntentFunction(clientSecret);
+      final intent = await getIntentFunction(clientSecret, stripeAccountOverride: stripeAccountOverride);
       if (intent['status'] != 'requires_action') {
         Navigator.of(context).pop();
         subscription.cancel();
@@ -181,7 +182,7 @@ class Stripe {
             onPressed: () {
               Navigator.of(context).pop();
               subscription.cancel();
-              completer.complete(getIntentFunction(clientSecret));
+              completer.complete(getIntentFunction(clientSecret, stripeAccountOverride: stripeAccountOverride));
             },
           ),
           SimpleDialogOption(

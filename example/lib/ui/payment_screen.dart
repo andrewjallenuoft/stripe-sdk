@@ -76,7 +76,7 @@ class PaymentScreen extends StatelessWidget {
     final Map response = await (networkService.createManualPaymentIntent(
       10000,
       'pm_card_threeDSecure2Required',
-      Stripe.instance.getReturnUrlForSca(webReturnUrl: '/'),
+      Stripe.instance.getReturnUrlForSca(webReturnPath: '/'),
     ) as FutureOr<Map<dynamic, dynamic>>);
     if (response['status'] == 'succeeded') {
       // TODO: success

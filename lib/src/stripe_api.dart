@@ -80,30 +80,30 @@ class StripeApi {
 
   /// Retrieve a PaymentIntent.
   /// https://stripe.com/docs/api/payment_intents/retrieve
-  Future<Map<String, dynamic>> retrievePaymentIntent(String clientSecret, {String? apiVersion}) async {
+  Future<Map<String, dynamic>> retrievePaymentIntent(String clientSecret, {String? apiVersion, final String? stripeAccountOverride}) async {
     final intentId = _parseIdFromClientSecret(clientSecret);
     final path = '/payment_intents/$intentId';
     final params = {'client_secret': clientSecret};
-    return _apiHandler.request(RequestMethod.get, path, publishableKey, apiVersion, params: params);
+    return _apiHandler.request(RequestMethod.get, path, publishableKey, apiVersion, params: params, stripeAccountOverride: stripeAccountOverride);
   }
 
   /// Confirm a PaymentIntent
   /// https://stripe.com/docs/api/payment_intents/confirm
-  Future<Map<String, dynamic>> confirmPaymentIntent(String clientSecret, {Map<String, dynamic>? data}) async {
+  Future<Map<String, dynamic>> confirmPaymentIntent(String clientSecret, {Map<String, dynamic>? data, final String? stripeAccountOverride}) async {
     data ??= {};
     final intent = _parseIdFromClientSecret(clientSecret);
     data['client_secret'] = clientSecret;
     final path = '/payment_intents/$intent/confirm';
-    return _apiHandler.request(RequestMethod.post, path, publishableKey, apiVersion, params: data);
+    return _apiHandler.request(RequestMethod.post, path, publishableKey, apiVersion, params: data, stripeAccountOverride: stripeAccountOverride);
   }
 
   /// Retrieve a SetupIntent.
   /// https://stripe.com/docs/api/setup_intents/retrieve
-  Future<Map<String, dynamic>> retrieveSetupIntent(String clientSecret, {String? apiVersion}) async {
+  Future<Map<String, dynamic>> retrieveSetupIntent(String clientSecret, {String? apiVersion, String? stripeAccountOverride}) async {
     final intentId = _parseIdFromClientSecret(clientSecret);
     final path = '/setup_intents/$intentId';
     final params = {'client_secret': clientSecret};
-    return _apiHandler.request(RequestMethod.get, path, publishableKey, apiVersion, params: params);
+    return _apiHandler.request(RequestMethod.get, path, publishableKey, apiVersion, params: params, stripeAccountOverride: stripeAccountOverride);
   }
 
   /// Confirm a SetupIntent
